@@ -78,6 +78,7 @@ class SparseMatrix {
         int commonValue; //read from input
         int numNonSparseValues;
         SparseRow* myMatrix; //Array
+        SparseRow* originalMatrix;
     public:
         SparseMatrix ();
         SparseMatrix (int n, int m, int cv, int numNSV); //Constructor
@@ -92,6 +93,7 @@ class SparseMatrix {
         void displayMatrix (); //Display the matrix in its matrix format
         //other methods that are necessary such as get and set
         void setMyMatrix(SparseRow* newMyMatrix[]);
+        SparseRow* getOriginalMatrix();
 };
 
 SparseMatrix::SparseMatrix()
@@ -101,6 +103,7 @@ SparseMatrix::SparseMatrix()
     commonValue = 0;
     numNonSparseValues = 0;
     myMatrix = NULL;
+    originalMatrix = NULL;
 }
 
 SparseMatrix::SparseMatrix(int rows, int cols, int cv, int numNSV)
@@ -110,7 +113,15 @@ SparseMatrix::SparseMatrix(int rows, int cols, int cv, int numNSV)
     commonValue = cv;
     numNonSparseValues = numNSV;
     myMatrix = new SparseRow[numNonSparseValues];
+    originalMatrix = new SparseRow[rows * cols];
+
+    if (myMatrix == nullptr) {
+        cerr << "Memory allocation failed for myMatrix." << endl;
+        return;
+    }
+
     int i = 0;
+
     for(int j = 0; j < numRows; j++){
         for(int k = 0; k < numCols; k++){
             int val;
@@ -123,7 +134,26 @@ SparseMatrix::SparseMatrix(int rows, int cols, int cv, int numNSV)
             }
         }
     }
-    
+
+    i = 0;
+    int l = 0;
+     for(int j = 0; j < numRows; j++){
+        for(int k = 0; k < numCols; k++){
+            if(myMatrix[i].getRow() == j && myMatrix[i].getCol() == k){
+                originalMatrix[l].setRow(j);
+                originalMatrix[l].setCol(k);
+                originalMatrix[l].setValue(myMatrix[i].getValue());
+                ++i;
+            }
+            else{
+                originalMatrix[l].setRow(j);
+                originalMatrix[l].setCol(k);
+                originalMatrix[l].setValue(commonValue);
+            }
+            ++l;
+        }
+    }
+
 }
 
 SparseMatrix::SparseMatrix(SparseMatrix& M)
@@ -148,6 +178,30 @@ void SparseMatrix::setMyMatrix(SparseRow* newMyMatrix[]) {
     myMatrix = *newMyMatrix;
 }
 
+// SparseRow* SparseMatrix::getOriginalMatrix() {
+//     SparseRow* originalMatrix = new SparseRow[numNonSparseValues];
+//     int i = 0;
+//     int l = 0;
+//      for(int j = 0; j < numRows; j++){
+//         for(int k = 0; k < numCols; k++){
+//             if(myMatrix[i].getRow() == j && myMatrix[i].getCol() == k){
+//                 originalMatrix[l].setRow(j);
+//                 originalMatrix[l].setCol(k);
+//                 originalMatrix[l].setValue(myMatrix[i].getValue());
+//                 ++i;
+//             }
+//             else{
+//                 originalMatrix[l].setRow(j);
+//                 originalMatrix[l].setCol(k);
+//                 originalMatrix[l].setValue(commonValue);
+//             }
+//             ++l;
+//         }
+//     }
+//     // cout << "Should be 0: "<< originalMatrix[10].getValue() << endl;
+//     return originalMatrix;
+// }
+
 void SparseMatrix::displaySparseMatrix()
 {
    for(int i = 0; i < numNonSparseValues; i++){
@@ -155,7 +209,7 @@ void SparseMatrix::displaySparseMatrix()
    }
 }
 
-void SparseMatrix:: displayMatrix(){
+void SparseMatrix::displayMatrix(){
     int i = 0;
     for(int j = 0; j < numRows; j++){
         for(int k = 0; k < numCols; k++){
@@ -184,116 +238,133 @@ SparseMatrix* SparseMatrix::Transpose()
 }
 
 SparseMatrix* SparseMatrix::Add(SparseMatrix& M) {
-        if (numRows != M.numRows || numCols != M.numCols) {
-            cerr << "Matrix dimensions do not match for addition" << endl;
-            return nullptr;
-        }
+    if (numRows != M.numRows || numCols != M.numCols) {
+        cerr << "Matrix dimensions do not match for addition" << endl;
+        return nullptr;
+    }
 
-        SparseRow* resultElements1 = new SparseRow[numCols * numRows];
-        int i;
-        int l;
-        int resultSize;
-        i = 0;
-        l = 0;
-        for(int j = 0; j < numRows; j++){
-            for(int k = 0; k < numCols; k++){
-                if(myMatrix[i].getRow() == j && myMatrix[i].getCol() == k){
-                    resultElements1[l].setRow(j);
-                    resultElements1[l].setCol(k);
-                    resultElements1[l].setValue(myMatrix[i].getValue());
-                    ++i;
-                }
-                else{
-                    resultElements1[l].setRow(j);
-                    resultElements1[l].setCol(k);
-                    resultElements1[l].setValue(commonValue);
-                }
-                ++l;
-            }
-        }
+        SparseRow* firstOriginalMatrix = originalMatrix;;
+        SparseRow* secondOriginalMatrix = M.originalMatrix;
 
-        cout << "should be 900: " << resultElements1[3].getValue() << endl;
-
-        SparseRow* resultElements2 = new SparseRow[M.numCols * M.numRows];
-        i = 0;
-        l = 0;
-        for(int j = 0; j < M.numRows; j++){
-            for(int k = 0; k < M.numCols; k++){
-                if(M.myMatrix[i].getRow() == j && M.myMatrix[i].getCol() == k){
-                    resultElements2[l].setRow(j);
-                    resultElements2[l].setCol(k);
-                    resultElements2[l].setValue(M.myMatrix[i].getValue());
-                    ++i;
-                }
-                else{
-                    resultElements2[l].setRow(j);
-                    resultElements2[l].setCol(k);
-                    resultElements2[l].setValue(commonValue);
-                }
-                ++l;
-            }
-        }
-        cout << "should be 49 " << M.myMatrix[1].getValue() << endl;
-        cout << "should be 49: " << resultElements2[4].getValue() << endl;
         SparseMatrix* result = new SparseMatrix(numRows, numCols, commonValue, numNonSparseValues);
-        
-        SparseRow* resultElements3 = new SparseRow[numCols * numRows];
-        for(int j = 0; j < numCols * numRows; j++){
-            resultElements3[j].setRow(resultElements1[j].getRow());
-            resultElements3[j].setCol(resultElements1[j].getCol());
-            resultElements3[j].setValue(resultElements1[j].getValue() + resultElements2[j].getValue());
+        SparseRow* resultElements = new SparseRow[numCols * numRows];
+        int resultSize = 0;
+        int i; 
 
+        
+        for(int j = 0; j < numCols * numRows; j++){
+            resultElements[j].setRow(firstOriginalMatrix[j].getRow());
+            resultElements[j].setCol(firstOriginalMatrix[j].getCol());
+            resultElements[j].setValue(firstOriginalMatrix[j].getValue() + secondOriginalMatrix[j].getValue());
         }
 
-        cout << "should be 236: " << resultElements3[7].getValue() << endl;
-
         for(int j = 0; j < numCols * numRows; j++){
-            if(resultElements3[j].getValue() != commonValue){
+            if(resultElements[j].getValue() != commonValue){
                 ++resultSize;
             }
         }
 
-        SparseRow* resultElements = new SparseRow[resultSize];
+        SparseRow* resultElementsSparse = new SparseRow[resultSize];
+        
         i = 0;
         for(int j = 0; j < numCols * numRows; j++){
-            if(resultElements3[j].getValue() != commonValue){
-                resultElements[i].setRow(resultElements3[j].getRow());
-                resultElements[i].setCol(resultElements3[j].getCol());
-                resultElements[i].setValue(resultElements3[j].getValue());
+            if(resultElements[j].getValue() != commonValue){
+                resultElementsSparse[i].setRow(resultElements[j].getRow());
+                resultElementsSparse[i].setCol(resultElements[j].getCol());
+                resultElementsSparse[i].setValue(resultElements[j].getValue());
                 ++i;
             }
         }
-         cout << resultElements[1].getValue() << endl;
+
         (*result).setMyMatrix(&resultElements);
 
         return result;
 }
 
 SparseMatrix* SparseMatrix::Multiply(SparseMatrix& M) {
-        if (numCols != M.numRows) {
+    SparseRow* resultElements = new SparseRow[numRows * M.numCols];
+    SparseRow* inputCol;
+    SparseRow* inputRow;
+    SparseRow* sparseResultElement;
+    SparseMatrix* result;
+
+
+    int resultSize = 0;
+
+    int staticIndex = 0;
+   
+    int resultIndex = 0;
+    int inputColIndex = 0;
+    int colIndex = 0;
+    int resultColIndex = 0;
+
+    int inputRowIndex = 0;
+    int rowIndex = 0;
+    int sum = 0;
+
+    if (numCols != M.numRows) {
             cerr << "Matrix dimensions do not match for multiplication" << endl;
             return nullptr;
-        }
+    }
 
-        SparseRow* resultElements = new SparseRow[numNonSparseValues];
-        for (int i = 0; i < numNonSparseValues; i++) {
-            for(int j = 0; j < M.numCols; j++){
-                if (myMatrix[i].getRow() == M.myMatrix[i].getRow() && M.myMatrix[i].getCol() == j) {
-                    resultElements[i].setRow(myMatrix[i].getRow());
-                    resultElements[i].setCol(M.myMatrix[i].getCol());
-                    resultElements[i].setValue(myMatrix[i].getValue() * M.myMatrix[i].getValue()); 
-                }
+    for(rowIndex = 0;  rowIndex < numRows; ++rowIndex){
+        //multiplier
+        inputRow = new SparseRow[numCols];
+        inputRowIndex = 0;
+        for(int j = 0; j < numCols * numRows; j++){
+            if(originalMatrix[j].getRow() == rowIndex){
+                inputRow[inputRowIndex] = originalMatrix[j];
+                ++inputRowIndex;
             }
         }
-        SparseMatrix* result = new SparseMatrix(numRows, M.numCols, commonValue, numNonSparseValues);
-        (*result).setMyMatrix(&resultElements);
+        //getting multiplied
+         inputCol = new SparseRow[M.numRows];
+        for(int k = 0; k < M.numCols; ++k){
+            inputColIndex = 0;
+            for(int j = 0; j < M.numCols * M.numRows; j++){
+                if(M.originalMatrix[j].getCol() == k){
+                    inputCol[inputColIndex] = M.originalMatrix[j];
+                    ++inputColIndex;
+                }      
+            }
+            //doing the multiplying
+            for(int j = 0; j < numCols; ++j){
+                sum += inputRow[j].getValue() * inputCol[j].getValue();
+            }
 
- 
+            resultElements[resultIndex].setRow(rowIndex);
+            resultElements[resultIndex].setCol(k);
+            resultElements[resultIndex].setValue(sum); 
+            ++resultIndex;
+            sum = 0;
+        }
+        delete[] inputRow;
+        delete[] inputCol;
+    }
 
-        return result;
+    for(int j = 0; j < numCols * M.numRows; j++){
+        if(resultElements[j].getValue() != commonValue){
+            ++resultSize;
+        }
+    }
+    sparseResultElement = new SparseRow[resultSize];
+
+    int i = 0;
+    for(int j = 0; j < numCols * M.numRows; j++){
+        if(resultElements[j].getValue() != commonValue){
+            sparseResultElement[i].setRow(resultElements[j].getRow());
+            sparseResultElement[i].setCol(resultElements[j].getCol());
+            sparseResultElement[i].setValue(resultElements[j].getValue());
+            ++i;
+        }
+    }
+
+    result = new SparseMatrix(numRows, M.numCols, commonValue, numNonSparseValues);
+    (*result).setMyMatrix(&sparseResultElement);
+
+    return result;
+
 }
-
-
 
 ostream& operator<<(ostream& s, SparseMatrix& sm)
 {
@@ -336,6 +407,10 @@ int main () {
     cout << "Matrix addition result" << endl;
     SparseMatrix* result = (*firstOne).Add(*secondOne);
     (*result).displayMatrix();
+
+    cout << "Matrix multiplication result" << endl;
+    SparseMatrix* result2 = (*firstOne).Multiply(*secondOne);
+    (*result2).displayMatrix();
 
    return 0;
 }
