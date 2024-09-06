@@ -8,7 +8,6 @@ class SparseRow {
         int value; //We will assume that all our values will be integers
     public:
         SparseRow (); //default constructor; row=-1;col=-1;value=0
-        ~SparseRow (); //destructor
         void display(); // print Row#, Column#, value
         friend ostream &operator<<(ostream &s, SparseRow sr);
         //other methods that are necessary such as get and set
@@ -31,9 +30,6 @@ SparseRow::SparseRow()
     value = 0;
 }
 
-SparseRow::~SparseRow() {
-    // No dynamically allocated resources to free
-}
 
 int SparseRow::getRow() const {
     return row;
@@ -115,11 +111,6 @@ SparseMatrix::SparseMatrix(int rows, int cols, int cv, int numNSV)
     myMatrix = new SparseRow[numNonSparseValues];
     originalMatrix = new SparseRow[rows * cols];
 
-    if (myMatrix == nullptr) {
-        cerr << "Memory allocation failed for myMatrix." << endl;
-        return;
-    }
-
     int i = 0;
 
     for(int j = 0; j < numRows; j++){
@@ -178,29 +169,6 @@ void SparseMatrix::setMyMatrix(SparseRow* newMyMatrix[]) {
     myMatrix = *newMyMatrix;
 }
 
-// SparseRow* SparseMatrix::getOriginalMatrix() {
-//     SparseRow* originalMatrix = new SparseRow[numNonSparseValues];
-//     int i = 0;
-//     int l = 0;
-//      for(int j = 0; j < numRows; j++){
-//         for(int k = 0; k < numCols; k++){
-//             if(myMatrix[i].getRow() == j && myMatrix[i].getCol() == k){
-//                 originalMatrix[l].setRow(j);
-//                 originalMatrix[l].setCol(k);
-//                 originalMatrix[l].setValue(myMatrix[i].getValue());
-//                 ++i;
-//             }
-//             else{
-//                 originalMatrix[l].setRow(j);
-//                 originalMatrix[l].setCol(k);
-//                 originalMatrix[l].setValue(commonValue);
-//             }
-//             ++l;
-//         }
-//     }
-//     // cout << "Should be 0: "<< originalMatrix[10].getValue() << endl;
-//     return originalMatrix;
-// }
 
 void SparseMatrix::displaySparseMatrix()
 {
@@ -210,6 +178,9 @@ void SparseMatrix::displaySparseMatrix()
 }
 
 void SparseMatrix::displayMatrix(){
+    if((this) == nullptr){
+        return;
+    };
     int i = 0;
     for(int j = 0; j < numRows; j++){
         for(int k = 0; k < numCols; k++){
@@ -317,6 +288,7 @@ SparseMatrix* SparseMatrix::Multiply(SparseMatrix& M) {
                 ++inputRowIndex;
             }
         }
+
         //getting multiplied
          inputCol = new SparseRow[M.numRows];
         for(int k = 0; k < M.numCols; ++k){
@@ -327,6 +299,7 @@ SparseMatrix* SparseMatrix::Multiply(SparseMatrix& M) {
                     ++inputColIndex;
                 }      
             }
+
             //doing the multiplying
             for(int j = 0; j < numCols; ++j){
                 sum += inputRow[j].getValue() * inputCol[j].getValue();
@@ -338,8 +311,6 @@ SparseMatrix* SparseMatrix::Multiply(SparseMatrix& M) {
             ++resultIndex;
             sum = 0;
         }
-        delete[] inputRow;
-        delete[] inputCol;
     }
 
     for(int j = 0; j < numCols * M.numRows; j++){
