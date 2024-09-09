@@ -86,6 +86,7 @@ class SparseMatrix {
         SparseMatrix* Multiply (SparseMatrix& M); //Matrix Multiplication
         SparseMatrix* Add (SparseMatrix& M); //Matrix Addition
         friend ostream& operator<< (ostream& s, SparseMatrix& sm);
+        void displaySparseMatrix (); //Display the matrix in its sparse format
         void displayMatrix (); //Display the matrix in its matrix format
         //other methods that are necessary such as get and set
         void setMyMatrix(SparseRow* newMyMatrix[]);
@@ -169,6 +170,13 @@ void SparseMatrix::setMyMatrix(SparseRow* newMyMatrix[]) {
     myMatrix = *newMyMatrix;
 }
 
+
+void SparseMatrix::displaySparseMatrix()
+{
+   for(int i = 0; i < numNonSparseValues; i++){
+       myMatrix[i].display();
+   }
+}
 
 void SparseMatrix::displayMatrix(){
     if((this) == nullptr){
@@ -324,10 +332,10 @@ SparseMatrix* SparseMatrix::Multiply(SparseMatrix& M) {
 
 ostream& operator<<(ostream& s, SparseMatrix& sm)
 {
-    for(int i = 0; i < sm.numNonSparseValues; i++){
-         sm.myMatrix[i].display();
-    }
-    return s;
+   for(int i = 0; i < sm.numNonSparseValues; i++){
+       sm.myMatrix[i].display();
+   }
+   return s;
 }
 
 int main () {
@@ -337,10 +345,10 @@ int main () {
    
    SparseMatrix* firstOne = new SparseMatrix(rows, cols, commonValue, numNonSparseValues);
    cout << "First one in sparse matrix format:" << endl;
-   cout << (*firstOne);
+   cout << *firstOne;
    
    cout << "After transpose:" << endl;
-   cout << (*(*firstOne).Transpose());
+   (*(*firstOne).Transpose()).displaySparseMatrix();
 
    cout << "First one in matrix format:" << endl;
    (*firstOne).displayMatrix();
@@ -349,10 +357,10 @@ int main () {
    cin >> rows >> cols >> commonValue >> numNonSparseValues;
    
    SparseMatrix* secondOne = new SparseMatrix(rows, cols, commonValue, numNonSparseValues);
-   cout << (*secondOne);
+   (*secondOne).displaySparseMatrix();
 
     cout << "After transpose:" << endl;
-    cout << (*(*secondOne).Transpose());
+    (*(*secondOne).Transpose()).displaySparseMatrix();
 
     cout << "Second one in matrix format:" << endl;
     (*secondOne).displayMatrix();
